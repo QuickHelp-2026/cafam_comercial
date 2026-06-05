@@ -235,6 +235,26 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
 .leaflet-popup-tip{background:var(--surface-solid)}
 .map-legend{display:flex;gap:18px;flex-wrap:wrap;padding:14px 20px}
 .map-legend span{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim)}
+.op-controls{display:grid;grid-template-columns:1.2fr auto auto;gap:12px;padding:0 20px 14px;align-items:end}
+.route-list{display:grid;gap:8px;max-height:260px;overflow:auto}
+.route-step{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(148,163,184,.05)}
+.route-step .num{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:rgba(37,99,235,.16);color:#93c5fd;font-family:var(--font-m);font-weight:700}
+.route-step b{font-size:13px}.route-step small{display:block;color:var(--text-soft);font-size:11.5px;margin-top:2px}
+.route-step .state{font-size:11px;color:var(--text-dim);white-space:nowrap}
+.exec-panel{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}
+.exec-copy{font-size:13.5px;line-height:1.65;color:var(--text-dim)}
+.exec-copy b{color:var(--text)}
+.signal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.signal{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(148,163,184,.05)}
+.signal span{display:block;color:var(--text-soft);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.signal b{display:block;margin-top:4px;font-family:var(--font-d);font-size:18px}
+.kpi-grid{gap:20px}
+.kpi{min-height:132px}
+.turn-state{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.turn-on{background:rgba(34,197,94,.14);color:#4ade80}.turn-late{background:rgba(239,68,68,.14);color:#f87171}.turn-soon{background:rgba(234,179,8,.14);color:#facc15}.turn-off{background:rgba(148,163,184,.14);color:#cbd5e1}
+.pdf-btn{width:auto;padding:0 14px}
+.telegram-box{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.telegram-box .field input{width:100%}
 
 .donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
 .donut-center b{font-family:var(--font-d);font-size:26px;display:block}
@@ -243,7 +263,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
 .config-note{font-size:12.5px;color:var(--text-dim);background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:14px 16px;line-height:1.6}
 .config-note code{background:rgba(0,0,0,.35);padding:2px 7px;border-radius:6px;font-family:var(--font-m);font-size:11.5px;color:#93c5fd}
 
-@media(max-width:1100px){.grid-2,.grid-3,.grid-2b,.ai-grid{grid-template-columns:1fr}}
+@media(max-width:1100px){.grid-2,.grid-3,.grid-2b,.ai-grid,.exec-panel,.telegram-box{grid-template-columns:1fr}.op-controls{grid-template-columns:1fr}}
 @media(max-width:820px){
   .sidebar{position:fixed;transform:translateX(-100%);box-shadow:var(--shadow)}
   .sidebar.open{transform:none}
@@ -289,6 +309,7 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
       <div class="topbar-right">
         <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar servicio, mensajero, droguería..."></div>
         <div class="live-pill"><span class="live-dot"></span> En vivo · <span id="lastUpdate">--:--</span></div>
+        <button class="icon-btn pdf-btn" id="pdfBtn" title="Informe ejecutivo PDF"><i class="fa-solid fa-file-pdf"></i>&nbsp;PDF</button>
         <button class="icon-btn" id="refreshBtn" title="Actualizar"><i class="fa-solid fa-rotate"></i></button>
       </div>
     </header>
@@ -297,6 +318,12 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
 
       <!-- ========== MÓDULO 1: RESUMEN ========== -->
       <section class="view active" id="resumen">
+        <div class="exec-panel">
+          <div class="card"><div class="card-h"><div><h3>Lectura ejecutiva en tiempo real</h3><div class="sub">Corte operativo actual conectado a Google Sheets</div></div></div>
+            <div class="card-body"><div class="exec-copy" id="execNarrative">Cargando lectura ejecutiva...</div></div></div>
+          <div class="card"><div class="card-h"><div><h3>Semáforo operativo</h3><div class="sub">Señales para coordinación inmediata</div></div></div>
+            <div class="card-body"><div class="signal-grid" id="signalGrid"></div></div></div>
+        </div>
         <div class="kpi-grid" id="kpiGrid"></div>
         <div class="grid-2">
           <div class="card"><div class="card-h"><div><h3>Tendencia de pedidos por hora</h3><div class="sub">Volumen de servicios a lo largo del día</div></div></div>
@@ -309,13 +336,18 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
           <div class="card"><div class="card-h"><div><h3>Top droguerías</h3></div></div><div class="card-body"><div class="chart-wrap"><canvas id="chDrog"></canvas></div></div></div>
           <div class="card"><div class="card-h"><div><h3>Canal de venta</h3></div></div><div class="card-body"><div class="chart-wrap"><canvas id="chCanal"></canvas></div></div></div>
         </div>
-        <div class="card"><div class="card-h"><div><h3>Pedidos por día</h3><div class="sub">Evolución semanal acumulada</div></div></div><div class="card-body"><div class="chart-wrap"><canvas id="chDia"></canvas></div></div></div>
+        <div class="card"><div class="card-h"><div><h3>Servicios activos por ciudad</h3><div class="sub">Lectura del momento: registro, ruta y llegada</div></div></div><div class="card-body"><div class="chart-wrap"><canvas id="chDia"></canvas></div></div></div>
       </section>
 
       <!-- ========== MÓDULO 2: OPERACIÓN ========== -->
       <section class="view" id="operacion">
         <div class="kpi-grid" id="opKpi" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))"></div>
         <div class="card"><div class="card-h"><div><h3>Mapa operativo en tiempo real</h3><div class="sub">Mensajeros, droguerías y pedidos georreferenciados</div></div></div>
+          <div class="op-controls">
+            <div class="field"><label>Mensajero</label><select id="opMensajero"><option value="">Todos los mensajeros</option></select></div>
+            <button class="btn btn-ghost" id="toggleRoute"><i class="fa-solid fa-route"></i> Línea de ruta</button>
+            <button class="btn btn-primary" id="focusRoute"><i class="fa-solid fa-location-crosshairs"></i> Enfocar ruta</button>
+          </div>
           <div class="map-legend">
             <span><i class="dot" style="background:var(--green)"></i>Entregado</span>
             <span><i class="dot" style="background:var(--red)"></i>Registro</span>
@@ -326,13 +358,15 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
           </div>
           <div class="card-body" style="padding-top:0"><div id="map"></div></div>
         </div>
+        <div class="card"><div class="card-h"><div><h3>Orden de entrega del mensajero</h3><div class="sub">Secuencia estimada por hora de creación, aceptación y cierre</div></div></div>
+          <div class="card-body"><div class="route-list" id="routeList"></div></div></div>
       </section>
 
       <!-- ========== MÓDULO 3: MENSAJEROS ========== -->
       <section class="view" id="mensajeros">
         <div class="grid-3" id="mensIndicators"></div>
-        <div class="card"><div class="card-h"><div><h3>Ranking de productividad</h3><div class="sub">Productividad = (Entregados / Total) × 100</div></div></div>
-          <div class="card-body"><table class="rank-table"><thead><tr><th>#</th><th>Mensajero</th><th>Ciudad</th><th>Turno</th><th>Total</th><th>Entregados</th><th>En Ruta</th><th>Registro</th><th>Cancel.</th><th>T. Prom</th><th>Productividad</th><th>Nivel</th></tr></thead><tbody id="mensBody"></tbody></table></div></div>
+        <div class="card"><div class="card-h"><div><h3>Ranking de productividad</h3><div class="sub">Productividad = (Entregados / Total) × 100, cruzada con MALLA</div></div></div>
+          <div class="card-body"><table class="rank-table"><thead><tr><th>#</th><th>Mensajero</th><th>Ciudad</th><th>Punto asignado</th><th>Turno real</th><th>Gestión</th><th>Total</th><th>Entregados</th><th>En Ruta</th><th>Registro</th><th>Cancel.</th><th>T. Prom</th><th>Productividad</th><th>Nivel</th></tr></thead><tbody id="mensBody"></tbody></table></div></div>
       </section>
 
       <!-- ========== MÓDULO 4: DROGUERÍAS ========== -->
@@ -367,8 +401,8 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
             <button class="btn btn-primary" id="applyFilter"><i class="fa-solid fa-filter"></i> Aplicar</button>
             <button class="btn btn-ghost" id="clearFilter"><i class="fa-solid fa-xmark"></i> Limpiar</button>
           </div></div></div>
-        <div class="card"><div class="card-h"><div><h3>Programación de malla</h3><div class="sub">Excluye automáticamente registros "NO ESTA EN TURNO"</div></div></div>
-          <div class="card-body"><table id="mallaTable" class="display" style="width:100%"><thead><tr><th>Semana</th><th>Fecha</th><th>Ciudad</th><th>Droguería</th><th>Cédula</th><th>Mensajero</th><th>Cel</th><th>Placa</th><th>Turno</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="card-h"><div><h3>Programación de malla</h3><div class="sub">Misma estructura de la hoja MALLA, con estado de ingreso y gestión del día</div></div></div>
+          <div class="card-body"><table id="mallaTable" class="display" style="width:100%"><thead><tr><th>Semana</th><th>Mes</th><th>Fecha</th><th>Ciudad</th><th>Droguería1</th><th>Cédula</th><th>Mensajero</th><th>Cel</th><th>Placa</th><th>Turno</th><th>Droguería</th><th>Estado turno</th><th>Servicios</th><th>Gestión</th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- ========== MÓDULO 7: IA ========== -->
@@ -384,9 +418,21 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
           <div class="card"><div class="card-h"><div><h3><i class="fa-solid fa-bell" style="color:var(--red)"></i> Alertas inteligentes</h3></div></div>
             <div class="card-body" id="smartAlerts" style="display:flex;flex-direction:column;gap:12px"></div></div>
         </div>
+        <div class="card"><div class="card-h"><div><h3><i class="fa-brands fa-telegram" style="color:#38bdf8"></i> Bot coordinador Telegram</h3><div class="sub">Envía alertas de colapso, productividad, sobrecarga y falta de atención</div></div></div>
+          <div class="card-body">
+            <div class="telegram-box">
+              <div class="field"><label>Bot token</label><input id="telegramToken" placeholder="123456:ABC..."></div>
+              <div class="field"><label>Chat ID coordinador</label><input id="telegramChat" placeholder="-1001234567890"></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+              <button class="btn btn-primary" id="sendTelegram"><i class="fa-brands fa-telegram"></i> Enviar alertas</button>
+              <button class="btn btn-ghost" id="copyTelegram"><i class="fa-solid fa-copy"></i> Copiar mensaje</button>
+            </div>
+            <div class="config-note" id="telegramStatus" style="margin-top:12px">El bot actuará como coordinador logístico: prioriza puntos colapsados, mensajeros sobrecargados, baja productividad y turnos sin gestión.</div>
+          </div></div>
         <div class="card"><div class="card-body">
           <div class="config-note"><b><i class="fa-solid fa-plug"></i> Conexión a Google Sheets</b><br>
-          Esta demo usa datos simulados con tu esquema exacto. Para usar tu hoja real: en <b>Google Sheets → Archivo → Compartir → Publicar en la web</b>, luego en el código abre <code>CONFIG</code> y cambia <code>useGoogleSheets:true</code>. El conector ya está implementado vía el endpoint <code>gviz/tq?tqx=out:csv</code> con PapaParse — no requiere backend ni API key si la hoja es pública.</div>
+          La plataforma queda conectada a tu archivo publicado mediante <code>gid=0</code> para DATA y <code>gid=1769706195</code> para MALLA. El tablero se actualiza automáticamente cada 15 minutos.</div>
         </div></div>
       </section>
 
@@ -412,12 +458,18 @@ table.dataTable tbody tr:hover td{background:rgba(37,99,235,.1)}
    CONFIGURACIÓN
 =================================================================== */
 const CONFIG = {
-  useGoogleSheets: false, // ← cámbialo a true cuando publiques tu hoja
+  useGoogleSheets: true,
   sheetId: '1Pefd6qXmMmhrAEkOC6mWt0SzB9m1LovZBgWyfeeS45A',
   sheetData: 'DATA',
   sheetMalla: 'MALLA',
-  refreshDashboard: 5 * 60 * 1000,   // 5 min
-  csvUrl(sheet){ return `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`; }
+  dataGid: '0',
+  mallaGid: '1769706195',
+  refreshDashboard: 15 * 60 * 1000,
+  csvUrl(sheet){
+    const gid = sheet === this.sheetMalla ? this.mallaGid : this.dataGid;
+    const range = sheet === this.sheetMalla ? '&range=A2:K' : '';
+    return `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv&gid=${gid}${range}`;
+  }
 };
 const COLORS = {blue:'#2563EB',green:'#22C55E',yellow:'#EAB308',red:'#EF4444',gray:'#94A3B8',purple:'#A855F7'};
 const ESTADO_COLOR = {'Entregado':COLORS.green,'Registro':COLORS.red,'En Ruta':COLORS.blue,'Llegada':COLORS.yellow,'Reprogramado':COLORS.purple,'Cancelado':'#fb7185','Congelado':COLORS.gray};
@@ -836,6 +888,342 @@ function renderIA(){
 /* ===================================================================
    NAVEGACIÓN + INIT
 =================================================================== */
+let routeLine=null, routeEnabled=false;
+
+function cleanKey(k){
+  return String(k||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'_').replace(/[^\w]/g,'_').toUpperCase();
+}
+function val(row,...keys){
+  const direct=keys.find(k=>row[k]!==undefined&&row[k]!==null&&String(row[k]).trim()!=='');
+  if(direct)return String(row[direct]).trim();
+  const mapped={}; Object.keys(row||{}).forEach(k=>mapped[cleanKey(k)]=row[k]);
+  for(const k of keys){const v=mapped[cleanKey(k)]; if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim();}
+  return '';
+}
+function num(v){
+  const n=parseFloat(String(v||'').replace(',','.').replace(/[^\d.-]/g,''));
+  return Number.isFinite(n)?n:0;
+}
+function parseHour(v){
+  if(v instanceof Date)return v.getHours();
+  const txt=String(v||'').trim();
+  if(!txt)return null;
+  if(!Number.isNaN(Number(txt)) && Number(txt)>0 && Number(txt)<1)return Math.floor(Number(txt)*24);
+  const m=txt.match(/(\d{1,2})[:.](\d{2})|^(\d{1,2})$/);
+  if(!m)return null;
+  return Math.max(0,Math.min(23,parseInt(m[1]||m[3],10)));
+}
+function parseDateValue(v){
+  if(v instanceof Date)return v;
+  const txt=String(v||'').trim();
+  if(!txt)return new Date();
+  const m=txt.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m)return new Date(+m[3],+m[2]-1,+m[1]);
+  const d=new Date(txt);
+  return Number.isNaN(d.getTime())?new Date():d;
+}
+function sameDay(a,b=new Date()){
+  const d=parseDateValue(a);
+  return d.getFullYear()===b.getFullYear()&&d.getMonth()===b.getMonth()&&d.getDate()===b.getDate();
+}
+function parseShiftStart(turno){
+  const txt=String(turno||'').toUpperCase();
+  const m=txt.match(/(\d{1,2})[:.](\d{2})/);
+  if(!m)return null;
+  return {h:+m[1],m:+m[2]};
+}
+function shiftDate(row){
+  const start=parseShiftStart(row.TURNO_DROGUERIA);
+  if(!start)return null;
+  const d=parseDateValue(row.FECHA);
+  d.setHours(start.h,start.m,0,0);
+  return d;
+}
+function safeText(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function fetchSheet(sheet){
+  const res=await fetch(CONFIG.csvUrl(sheet),{cache:'no-store'});
+  if(!res.ok)throw new Error('No se pudo leer Google Sheets: '+res.status);
+  return parseCsv(await res.text());
+}
+function parseCsv(text){
+  if(window.Papa)return Papa.parse(text,{header:true,skipEmptyLines:true}).data;
+  const rows=[]; let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
+    if(c==='"'&&q&&n==='"'){cell+='"';i++;}
+    else if(c==='"')q=!q;
+    else if(c===','&&!q){row.push(cell);cell='';}
+    else if((c==='\n'||c==='\r')&&!q){if(cell||row.length){row.push(cell);rows.push(row);row=[];cell='';} if(c==='\r'&&n==='\n')i++;}
+    else cell+=c;
+  }
+  if(cell||row.length){row.push(cell);rows.push(row);}
+  const headers=(rows.shift()||[]).map(h=>h.trim());
+  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]||''])));
+}
+
+function mapData(raw){return raw.map(r=>{
+  const ciudad=val(r,'ciudad','CIUDAD2','CIUDAD');
+  const fecha=val(r,'fecha_creacion','fecha_cierre','FECHA');
+  const horaRaw=val(r,'hora_creacion');
+  return {
+    servicio:val(r,'servicio'),
+    farmacia_asignada:val(r,'farmacia_asignada','DROGUERIA'),
+    nombre_cliente:val(r,'nombre_cliente'),
+    identificacion_cliente:val(r,'identificacion_cliente'),
+    direccion:val(r,'direccion'),
+    ciudad:ciudad||'Sin ciudad',
+    regional:val(r,'regional'),
+    zona:val(r,'zona','localidad'),
+    forma_pago:val(r,'forma_pago'),
+    nombre_mediopago:val(r,'nombre_mediopago'),
+    canal_venta:val(r,'canal_venta')||'Sin canal',
+    tipo_servicio:val(r,'tipo_servicio'),
+    estado:normalizeEstado(val(r,'estado')),
+    novedad_servicio:val(r,'novedad_servicio'),
+    nombre_mensajero:val(r,'nombre_mensajero','MENSAJERO')||'Sin mensajero',
+    cedula_mensajero:val(r,'cedula_mensajero','identificacion_mensajero','CEDULA'),
+    fecha_creacion:fecha,
+    hora_creacion:parseHour(horaRaw)??12,
+    hora_creacion_raw:horaRaw,
+    hora_aceptacion_mensajero:val(r,'hora_aceptacion_mensajero'),
+    hora_cierre_registrada:val(r,'hora_cierre_registrada'),
+    fecha_ultima_modificacion:val(r,'fecha_ultima_modificacion'),
+    hora_ultima_modificacion:val(r,'hora_ultima_modificacion'),
+    total_a_pagar:num(val(r,'total_a_pagar')),
+    tiempo_total_proceso:num(val(r,'tiempo_total_proceso','duracion_llegada_entrega','suma_ruta_entrega'))||0,
+    tiempo_registro:num(val(r,'tiempo_registro')),
+    OPERACION:val(r,'OPERACIÓN','OPERACION'),
+    CONTRATO:val(r,'CONTRATO'),
+    MES:val(r,'MES'),
+    DIA:val(r,'DÍA','DIA'),
+    TURNO:val(r,'TURNO'),
+    cx:num(val(r,'cx')),
+    cy:num(val(r,'cy'))
+  };
+}).filter(r=>r.servicio||r.farmacia_asignada||r.nombre_mensajero);}
+function normalizeEstado(e){
+  const t=String(e||'Registro').trim().toLowerCase();
+  if(t.includes('entreg'))return 'Entregado';
+  if(t.includes('ruta'))return 'En Ruta';
+  if(t.includes('lleg'))return 'Llegada';
+  if(t.includes('reprogram'))return 'Reprogramado';
+  if(t.includes('cancel'))return 'Cancelado';
+  if(t.includes('congel'))return 'Congelado';
+  if(t.includes('registro'))return 'Registro';
+  return e||'Registro';
+}
+function mapMalla(raw){return raw.map(r=>({
+  SEMANA:val(r,'SEMANA'),
+  MES:val(r,'MES'),
+  FECHA:val(r,'FECHA'),
+  CIUDAD:val(r,'CIUDAD'),
+  DROGUERIA1:val(r,'DROGUERIA1','DROGUERIA_1'),
+  CEDULA:val(r,'CEDULA'),
+  MENSAJERO:val(r,'MENSAJERO'),
+  CEL:val(r,'CEL','# CEL','#','TELEFONO'),
+  PLACA:val(r,'PLACA'),
+  TURNO_DROGUERIA:val(r,'TURNO  DROGUERIA','TURNO DROGUERIA','TURNO'),
+  DROGUERIA:val(r,'DROGUERIA','PUNTO_ASIGNADO')
+})).filter(r=>r.MENSAJERO||r.CEDULA||r.DROGUERIA||r.DROGUERIA1);}
+function activeMallaRows(){return MALLA.filter(m=>String(m.DROGUERIA||'').toUpperCase()!=='NO ESTA EN TURNO' && !String(m.TURNO_DROGUERIA||'').toUpperCase().includes('DESCANSO'));}
+function mensajerosActivos(){return new Set(activeMallaRows().map(m=>m.CEDULA||m.MENSAJERO).filter(Boolean)).size;}
+function gestionTipo(d,m){
+  const text=`${d?.OPERACION||''} ${d?.CONTRATO||''} ${m?.DROGUERIA||''} ${m?.DROGUERIA1||''}`.toLowerCase();
+  if(text.includes('colab'))return 'Colaborativo';
+  if(text.includes('fijo'))return 'Fijo';
+  return d?.OPERACION||'Operación';
+}
+function findMallaForCourier(d){
+  const ced=String(d.cedula_mensajero||'').trim();
+  const name=String(d.nombre_mensajero||'').trim().toUpperCase();
+  return activeMallaRows().find(m=>ced&&String(m.CEDULA).trim()===ced) || activeMallaRows().find(m=>String(m.MENSAJERO||'').trim().toUpperCase()===name) || null;
+}
+function servicesForMalla(m){
+  const ced=String(m.CEDULA||'').trim();
+  const name=String(m.MENSAJERO||'').trim().toUpperCase();
+  return DATA.filter(d=>(ced&&String(d.cedula_mensajero||'').trim()===ced)||String(d.nombre_mensajero||'').trim().toUpperCase()===name);
+}
+function turnStatus(m){
+  const off=String(m.DROGUERIA||'').toUpperCase()==='NO ESTA EN TURNO'||String(m.TURNO_DROGUERIA||'').toUpperCase().includes('DESCANSO');
+  if(off)return {label:'Descanso',cls:'turn-off',late:false};
+  const start=shiftDate(m), now=new Date(), svc=servicesForMalla(m).length;
+  if(!sameDay(m.FECHA,now))return {label:'Programado',cls:'turn-soon',late:false};
+  if(!start)return svc?{label:'En turno',cls:'turn-on',late:false}:{label:'Pendiente',cls:'turn-soon',late:false};
+  if(now<start)return {label:'Pendiente',cls:'turn-soon',late:false};
+  const diff=(now-start)/36e5;
+  if(svc>0)return {label:'En turno',cls:'turn-on',late:false};
+  if(diff>=2)return {label:'Sin gestión +2h',cls:'turn-late',late:true};
+  return {label:'Debe ingresar',cls:'turn-soon',late:false};
+}
+function unattendedCouriers(){return activeMallaRows().filter(m=>turnStatus(m).late);}
+
+function renderKpis(){
+  const total=DATA.length, ent=byEstado('Entregado'), ruta=byEstado('En Ruta'),
+        lleg=byEstado('Llegada'), reg=byEstado('Registro'), reprog=byEstado('Reprogramado'),
+        canc=byEstado('Cancelado'), cong=byEstado('Congelado');
+  const nivel=total?ent/total*100:0, tProm=avg(DATA.map(d=>d.tiempo_total_proceso).filter(Boolean));
+  const mensA=mensajerosActivos(), drogA=new Set(DATA.map(d=>d.farmacia_asignada).filter(Boolean)).size;
+  const ciuA=new Set(DATA.map(d=>d.ciudad).filter(Boolean)).size, late=unattendedCouriers().length;
+  const colap=colapsoCount();
+  document.getElementById('execNarrative').innerHTML=`La operación registra <b>${total.toLocaleString('es')}</b> servicios en el corte actual. El nivel de servicio está en <b>${nivel.toFixed(1)}%</b>, con <b>${reg}</b> servicios en registro, <b>${ruta}</b> en ruta y <b>${lleg}</b> en llegada. Hay <b>${mensA}</b> mensajeros programados activos en MALLA y <b>${late}</b> alertas de turnos que debieron iniciar hace más de 2 horas sin gestión registrada.`;
+  document.getElementById('signalGrid').innerHTML=[
+    ['Puntos críticos',colap,colap?'var(--red)':'var(--green)'],
+    ['Sin gestión +2h',late,late?'var(--red)':'var(--green)'],
+    ['Registro',reg,reg>9?'var(--yellow)':'var(--green)'],
+    ['Promedio entrega',`${Math.round(tProm||0)} min`,tProm>60?'var(--yellow)':'var(--green)']
+  ].map(s=>`<div class="signal"><span>${s[0]}</span><b style="color:${s[2]}">${s[1]}</b></div>`).join('');
+  const kpis=[
+    {l:'Total Servicios',v:total,ic:'fa-box',c:'blue'},{l:'Entregados',v:ent,ic:'fa-circle-check',c:'green'},
+    {l:'En Ruta',v:ruta,ic:'fa-truck-fast',c:'blue'},{l:'En Registro',v:reg,ic:'fa-clipboard-list',c:'red'},
+    {l:'Llegada',v:lleg,ic:'fa-location-dot',c:'yellow'},{l:'Reprogramados',v:reprog,ic:'fa-rotate-right',c:'purple'},
+    {l:'Cancelados',v:canc,ic:'fa-circle-xmark',c:'red'},{l:'Congelados',v:cong,ic:'fa-snowflake',c:'gray'},
+    {l:'Nivel de Servicio',v:nivel,suf:'%',ic:'fa-gauge-high',c:'green',dec:1},{l:'Tiempo Prom. Entrega',v:tProm||0,suf:' min',ic:'fa-clock',c:'yellow',dec:0},
+    {l:'Mensajeros Programados',v:mensA,ic:'fa-person-biking',c:'blue'},{l:'Droguerías Activas',v:drogA,ic:'fa-store',c:'green'},{l:'Ciudades Activas',v:ciuA,ic:'fa-city',c:'purple'}
+  ];
+  const g=document.getElementById('kpiGrid'); g.innerHTML='';
+  kpis.forEach((k,i)=>{const el=document.createElement('div');el.className='kpi';el.style.animationDelay=(i*.04)+'s';el.innerHTML=`<div class="top"><div><div class="label">${k.l}</div></div><div class="ic bg-${k.c}"><i class="fa-solid ${k.ic}"></i></div></div><div class="val" data-target="${k.v}" data-dec="${k.dec||0}" data-suf="${k.suf||''}">0</div>`;g.appendChild(el);});
+  animateCounters(); document.getElementById('donutTotal').textContent=total; document.getElementById('alertBadge').textContent=colap;
+}
+
+function renderCharts(){
+  if(!window.Chart)return;
+  Object.values(charts).forEach(c=>c&&c.destroy&&c.destroy()); charts={};
+  const est=countBy(DATA,'estado');
+  charts.estado=new Chart(chEstado,{type:'doughnut',data:{labels:Object.keys(est),datasets:[{data:Object.values(est),backgroundColor:Object.keys(est).map(e=>ESTADO_COLOR[e]||COLORS.gray),borderWidth:0,hoverOffset:8}]},options:{...chartBase,cutout:'68%',plugins:{legend:{position:'right',labels:chartBase.plugins.legend.labels}}}});
+  const horas=Array.from({length:18},(_,i)=>i+5);
+  charts.hora=new Chart(chHora,{type:'line',data:{labels:horas.map(h=>h+':00'),datasets:[{label:'Pedidos',data:horas.map(h=>DATA.filter(d=>d.hora_creacion===h).length),borderColor:COLORS.blue,backgroundColor:'rgba(37,99,235,.18)',fill:true,tension:.38,pointRadius:2,borderWidth:2.5}]},options:{...chartBase,plugins:{legend:{display:false}},scales:{x:gridScale,y:gridScale}}});
+  const ciu=countBy(DATA,'ciudad');
+  charts.ciudad=new Chart(chCiudad,{type:'bar',data:{labels:Object.keys(ciu),datasets:[{data:Object.values(ciu),backgroundColor:COLORS.green,borderRadius:8,maxBarThickness:34}]},options:{...chartBase,plugins:{legend:{display:false}},scales:{x:gridScale,y:gridScale}}});
+  const drog=Object.entries(countBy(DATA,'farmacia_asignada')).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  charts.drog=new Chart(chDrog,{type:'bar',data:{labels:drog.map(d=>d[0]),datasets:[{data:drog.map(d=>d[1]),backgroundColor:COLORS.purple,borderRadius:7,maxBarThickness:22}]},options:{...chartBase,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:gridScale,y:{...gridScale,ticks:{...gridScale.ticks,font:{size:10}}}}}});
+  const can=countBy(DATA,'canal_venta');
+  charts.canal=new Chart(chCanal,{type:'doughnut',data:{labels:Object.keys(can),datasets:[{data:Object.values(can),backgroundColor:[COLORS.blue,COLORS.green,COLORS.yellow,COLORS.purple,COLORS.gray],borderWidth:0,hoverOffset:6}]},options:{...chartBase,cutout:'55%'}});
+  const activos=DATA.filter(d=>['Registro','En Ruta','Llegada'].includes(d.estado));
+  const actCiu=Object.entries(countBy(activos,'ciudad')).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  charts.dia=new Chart(chDia,{type:'bar',data:{labels:actCiu.map(x=>x[0]),datasets:[{label:'Activos',data:actCiu.map(x=>x[1]),backgroundColor:COLORS.yellow,borderRadius:8,maxBarThickness:36}]},options:{...chartBase,plugins:{legend:{display:false}},scales:{x:gridScale,y:gridScale}}});
+}
+
+function populateCourierFilter(){
+  const sel=document.getElementById('opMensajero'); if(!sel)return;
+  const current=sel.value;
+  const names=[...new Set(DATA.map(d=>d.nombre_mensajero).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Todos los mensajeros</option>'+names.map(n=>`<option>${safeText(n)}</option>`).join('');
+  if(names.includes(current))sel.value=current;
+}
+function orderedRouteRows(){
+  const courier=document.getElementById('opMensajero')?.value||'';
+  const rows=(courier?DATA.filter(d=>d.nombre_mensajero===courier):DATA).filter(d=>d.cx&&d.cy);
+  return rows.sort((a,b)=>(a.hora_creacion||0)-(b.hora_creacion||0)||String(a.servicio).localeCompare(String(b.servicio))).slice(0,courier?80:180);
+}
+function renderMap(){
+  if(!window.L){document.getElementById('map').innerHTML='<div class="config-note">Leaflet no está disponible. Revisa conexión a internet para ver el mapa.</div>';return;}
+  populateCourierFilter();
+  if(!map){map=L.map('map',{zoomControl:true}).setView([4.65,-74.1],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap, © CARTO',maxZoom:19}).addTo(map);}
+  markers.forEach(m=>map.removeLayer(m)); markers=[]; if(routeLine){map.removeLayer(routeLine);routeLine=null;}
+  const rows=orderedRouteRows();
+  rows.forEach((d,i)=>{const col=ESTADO_COLOR[d.estado]||COLORS.gray;const mk=L.circleMarker([d.cx,d.cy],{radius:document.getElementById('opMensajero')?.value?8:6,fillColor:col,color:'#fff',weight:1,fillOpacity:.92});mk.bindPopup(`<b>${safeText(d.servicio)}</b><br>${safeText(d.farmacia_asignada)}<br>Estado: <b style="color:${col}">${safeText(d.estado)}</b><br>Mensajero: ${safeText(d.nombre_mensajero)}<br>Orden: ${i+1}`);mk.addTo(map);markers.push(mk);});
+  if(routeEnabled&&document.getElementById('opMensajero')?.value&&rows.length>1){routeLine=L.polyline(rows.map(d=>[d.cx,d.cy]),{color:COLORS.blue,weight:4,opacity:.82,dashArray:'8 8'}).addTo(map);}
+  if(rows.length)map.fitBounds(rows.map(d=>[d.cx,d.cy]),{padding:[30,30],maxZoom:13});
+  renderRouteList(rows);
+  setTimeout(()=>map.invalidateSize(),200);
+}
+function renderRouteList(rows=orderedRouteRows()){
+  const box=document.getElementById('routeList'); if(!box)return;
+  const courier=document.getElementById('opMensajero')?.value;
+  if(!courier){box.innerHTML='<div class="config-note">Selecciona un mensajero para ver el orden estimado de entrega y activar la línea de ruta.</div>';return;}
+  if(!rows.length){box.innerHTML='<div class="config-note">El mensajero seleccionado no tiene pedidos georreferenciados en el corte actual.</div>';return;}
+  box.innerHTML=rows.slice(0,30).map((d,i)=>`<div class="route-step"><div class="num">${i+1}</div><div><b>${safeText(d.servicio)} · ${safeText(d.farmacia_asignada)}</b><small>${safeText(d.direccion||d.ciudad)} · ${safeText(d.hora_creacion_raw||d.hora_creacion+':00')}</small></div><div class="state">${safeText(d.estado)}</div></div>`).join('');
+}
+
+function mensajerosStats(){
+  const grp={};
+  DATA.forEach(d=>{const k=d.nombre_mensajero||'Sin mensajero'; if(!grp[k]){const m=findMallaForCourier(d);grp[k]={nombre:k,ciudad:d.ciudad,punto:m?.DROGUERIA||m?.DROGUERIA1||d.farmacia_asignada,turno:m?.TURNO_DROGUERIA||d.TURNO||'Sin turno',gestion:gestionTipo(d,m),total:0,ent:0,ruta:0,reg:0,canc:0,tiempos:[]};} grp[k].total++; if(d.estado==='Entregado')grp[k].ent++; if(d.estado==='En Ruta')grp[k].ruta++; if(d.estado==='Registro')grp[k].reg++; if(d.estado==='Cancelado')grp[k].canc++; if(d.tiempo_total_proceso)grp[k].tiempos.push(d.tiempo_total_proceso);});
+  return Object.values(grp).map(m=>({...m,tProm:Math.round(avg(m.tiempos)),prod:m.total?(m.ent/m.total*100):0})).sort((a,b)=>b.prod-a.prod||b.total-a.total);
+}
+function renderMensajeros(){
+  const stats=mensajerosStats(), body=document.getElementById('mensBody'); body.innerHTML='';
+  stats.forEach((m,i)=>{const[nv,cls]=nivelProd(m.prod);const rk=i===0?'gold':i===1?'silver':i===2?'bronze':'';const pc=m.prod>=90?COLORS.green:m.prod>=80?COLORS.blue:m.prod>=70?COLORS.yellow:COLORS.red;body.innerHTML+=`<tr><td><span class="rank-num ${rk}">${i+1}</span></td><td><div class="who"><div class="ava" style="background:${colorFromName(m.nombre)}">${initials(m.nombre)}</div><div><b>${safeText(m.nombre)}</b></div></div></td><td>${safeText(m.ciudad)}</td><td>${safeText(m.punto)}</td><td>${safeText(m.turno)}</td><td>${safeText(m.gestion)}</td><td><b>${m.total}</b></td><td style="color:var(--green)">${m.ent}</td><td style="color:#60a5fa">${m.ruta}</td><td style="color:var(--red)">${m.reg}</td><td>${m.canc}</td><td>${m.tProm||0} min</td><td><span class="bar-prog"><i style="width:${Math.min(100,m.prod)}%;background:${pc}"></i></span><b style="font-family:var(--font-m)">${m.prod.toFixed(0)}%</b></td><td><span class="badge ${cls}">${nv}</span></td></tr>`;});
+  const best=stats[0]||{}, worst=stats[stats.length-1]||{}, mayorT=[...stats].sort((a,b)=>(b.tProm||0)-(a.tProm||0))[0]||{};
+  document.getElementById('mensIndicators').innerHTML=[
+    {t:'Mejor mensajero',n:best.nombre||'—',v:((best.prod||0).toFixed(0))+'% productividad',ic:'fa-trophy',c:'green'},
+    {t:'Menor rendimiento',n:worst.nombre||'—',v:((worst.prod||0).toFixed(0))+'% productividad',ic:'fa-arrow-trend-down',c:'red'},
+    {t:'Sin gestión +2h',n:unattendedCouriers().length+' mensajeros',v:'Deben ser contactados',ic:'fa-user-clock',c:'yellow'}
+  ].map(x=>`<div class="card"><div class="card-body" style="display:flex;gap:14px;align-items:center"><div class="ic bg-${x.c}" style="width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:19px"><i class="fa-solid ${x.ic}"></i></div><div><div style="font-size:11.5px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.5px;font-weight:600">${x.t}</div><div style="font-family:var(--font-d);font-size:16px;font-weight:700;margin:2px 0">${safeText(x.n)}</div><div style="font-size:12.5px;color:var(--text-dim)">${x.v}</div></div></div></div>`).join('');
+}
+
+function drogStats(){
+  const grp={};
+  DATA.forEach(d=>{const k=d.farmacia_asignada||'Sin droguería'; if(!grp[k])grp[k]={drog:k,ciudad:d.ciudad,total:0,ent:0,reg:0,ruta:0,tiempos:[]};grp[k].total++; if(d.estado==='Entregado')grp[k].ent++; if(d.estado==='Registro')grp[k].reg++; if(d.estado==='En Ruta')grp[k].ruta++; if(d.tiempo_total_proceso)grp[k].tiempos.push(d.tiempo_total_proceso);});
+  return Object.values(grp).map(g=>{const asign=activeMallaRows().filter(m=>[m.DROGUERIA,m.DROGUERIA1].some(x=>String(x||'').toUpperCase().includes(String(g.drog||'').toUpperCase())||String(g.drog||'').toUpperCase().includes(String(x||'').toUpperCase()))).length;return{...g,tProm:Math.round(avg(g.tiempos)),asign};}).sort((a,b)=>b.total-a.total);
+}
+
+function renderMalla(){
+  const rows=MALLA;
+  const ciudades=[...new Set(rows.map(m=>m.CIUDAD).filter(Boolean))].sort(), drogs=[...new Set(rows.map(m=>m.DROGUERIA||m.DROGUERIA1).filter(Boolean))].sort(), turnos=[...new Set(rows.map(m=>m.TURNO_DROGUERIA).filter(Boolean))].sort();
+  document.getElementById('fCiudad').innerHTML='<option value="">Todas</option>'+ciudades.map(c=>`<option>${safeText(c)}</option>`).join('');
+  document.getElementById('fDrog').innerHTML='<option value="">Todas</option>'+drogs.map(c=>`<option>${safeText(c)}</option>`).join('');
+  document.getElementById('fTurno').innerHTML='<option value="">Todos</option>'+turnos.map(c=>`<option>${safeText(c)}</option>`).join('');
+  const data=rows.map(m=>{const st=turnStatus(m), svc=servicesForMalla(m).length, gestion=svc?gestionTipo(servicesForMalla(m)[0],m):'Sin gestión';return [m.SEMANA,m.MES,m.FECHA,m.CIUDAD,m.DROGUERIA1,m.CEDULA,m.MENSAJERO,m.CEL,m.PLACA,m.TURNO_DROGUERIA,m.DROGUERIA,`<span class="turn-state ${st.cls}">${st.label}</span>`,svc,gestion];});
+  if(window.$&&$.fn.DataTable){if(mallaDT){mallaDT.destroy();$('#mallaTable tbody').empty();}mallaDT=$('#mallaTable').DataTable({data,dom:'Bfrtip',buttons:[{extend:'excelHtml5',text:'<i class="fa-solid fa-file-excel"></i> Excel',className:'dt-button'},{extend:'pdfHtml5',text:'<i class="fa-solid fa-file-pdf"></i> PDF',className:'dt-button',orientation:'landscape',pageSize:'A4'},{extend:'print',text:'<i class="fa-solid fa-print"></i> Imprimir',className:'dt-button'}],pageLength:15,language:{search:'Buscar:',lengthMenu:'Mostrar _MENU_',info:'_START_–_END_ de _TOTAL_',paginate:{previous:'‹',next:'›'},zeroRecords:'Sin resultados'}});}
+  else{document.querySelector('#mallaTable tbody').innerHTML=data.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');}
+}
+function filterMalla(){
+  const c=document.getElementById('fCiudad').value,d=document.getElementById('fDrog').value,t=document.getElementById('fTurno').value,m=document.getElementById('fMens').value;
+  if(mallaDT)mallaDT.column(3).search(c).column(10).search(d).column(9).search(t).column(6).search(m).draw();
+}
+
+function buildAlerts(){
+  const ds=drogStats(), ms=mensajerosStats(), alerts=[];
+  ds.filter(d=>d.reg>9).forEach(d=>alerts.push({sev:'CRÍTICA',txt:`Punto colapsado: ${d.drog} tiene ${d.reg} servicios en registro y ${d.asign} mensajeros programados.`}));
+  ms.filter(m=>m.total>=12&&m.prod<75).slice(0,5).forEach(m=>alerts.push({sev:'ALTA',txt:`Mensajero sobrecargado o poco productivo: ${m.nombre}, ${m.total} servicios, ${m.prod.toFixed(0)}% productividad.`}));
+  unattendedCouriers().slice(0,8).forEach(m=>alerts.push({sev:'ALTA',txt:`Falta de atención: ${m.MENSAJERO} debía ingresar al turno ${m.TURNO_DROGUERIA} en ${m.DROGUERIA||m.DROGUERIA1} y no registra servicios después de 2 horas.`}));
+  ds.filter(d=>d.reg>=5&&d.reg<=9).forEach(d=>alerts.push({sev:'MEDIA',txt:`Riesgo de congestión: ${d.drog} acumula ${d.reg} servicios en registro.`}));
+  if(!alerts.length)alerts.push({sev:'OK',txt:'Operación sin alertas críticas en el corte actual.'});
+  return alerts;
+}
+function renderIA(){
+  const ds=drogStats(), ms=mensajerosStats(), topCiu=Object.entries(countBy(DATA,'ciudad')).sort((a,b)=>b[1]-a[1])[0]||['—',0], colap=ds.find(d=>d.reg>9), best=ms[0]||{}, avgProd=avg(ms.map(m=>m.prod)), tProm=avg(DATA.map(d=>d.tiempo_total_proceso).filter(Boolean)), sobrecargado=[...ms].sort((a,b)=>b.total-a.total)[0]||{};
+  const insights=[]; if(colap)insights.push({tag:'Riesgo de colapso',c:'red',ic:'fa-triangle-exclamation',txt:`La droguería <b>${safeText(colap.drog)}</b> presenta congestión con <b>${colap.reg} servicios en registro</b> y ${colap.asign} mensajeros programados.`});
+  insights.push({tag:'Mejor rendimiento',c:'green',ic:'fa-trophy',txt:`El mensajero <b>${safeText(best.nombre||'—')}</b> tiene un rendimiento <b>${((best.prod||0)-avgProd).toFixed(0)}% superior</b> al promedio del equipo.`});
+  insights.push({tag:'Concentración',c:'blue',ic:'fa-city',txt:`La ciudad <b>${safeText(topCiu[0])}</b> concentra el <b>${DATA.length?(topCiu[1]/DATA.length*100).toFixed(0):0}%</b> de los pedidos del corte actual.`});
+  insights.push({tag:'Control de turnos',c:'yellow',ic:'fa-user-clock',txt:`Hay <b>${unattendedCouriers().length}</b> mensajeros programados que deberían estar gestionando y aún no registran servicios.`});
+  document.getElementById('insightsGrid').innerHTML=insights.map(x=>`<div class="insight"><div class="ic bg-${x.c}"><i class="fa-solid ${x.ic}"></i></div><div><span class="tag" style="color:var(--${x.c==='green'?'green':x.c==='red'?'red':x.c==='yellow'?'yellow':'blue'})">${x.tag}</span><p>${x.txt}</p></div></div>`).join('');
+  document.getElementById('predGrid').innerHTML=[colap?`Priorizar redistribución hacia <b>${safeText(colap.drog)}</b> para evitar aumento de registro.`:'Sin colapsos críticos proyectados con el corte actual.',`Monitorear a <b>${safeText(sobrecargado.nombre||'—')}</b>: mayor carga con ${sobrecargado.total||0} servicios.`,tProm>60?`Tiempo promedio elevado (${tProm.toFixed(0)} min): probable acumulación de retrasos.`:`Tiempo promedio controlado (${(tProm||0).toFixed(0)} min).`,`Droguerías en riesgo: <b>${ds.filter(d=>d.reg>=5).length}</b>.`].map(p=>`<div class="insight"><div class="ic bg-blue"><i class="fa-solid fa-chart-line"></i></div><p>${p}</p></div>`).join('');
+  document.getElementById('smartAlerts').innerHTML=buildAlerts().map(a=>`<div class="insight"><div class="ic bg-${a.sev==='CRÍTICA'||a.sev==='ALTA'?'red':a.sev==='MEDIA'?'yellow':'green'}"><i class="fa-solid ${a.sev==='OK'?'fa-circle-check':'fa-bell'}"></i></div><p><b>${a.sev}</b> · ${safeText(a.txt)}</p></div>`).join('');
+}
+
+function telegramMessage(){
+  const now=new Date().toLocaleString('es-CO'), alerts=buildAlerts();
+  return `COORDINADOR QUICK - CORTE ${now}\n\nResumen:\n- Servicios: ${DATA.length}\n- Entregados: ${byEstado('Entregado')}\n- Registro: ${byEstado('Registro')}\n- En ruta: ${byEstado('En Ruta')}\n- Nivel servicio: ${(DATA.length?byEstado('Entregado')/DATA.length*100:0).toFixed(1)}%\n- Sin gestión +2h: ${unattendedCouriers().length}\n\nAlertas priorizadas:\n${alerts.slice(0,12).map((a,i)=>`${i+1}. [${a.sev}] ${a.txt}`).join('\n')}\n\nAcción sugerida: reasignar capacidad en puntos críticos, contactar mensajeros sin gestión y validar sobrecarga/baja productividad.`;
+}
+async function sendTelegramAlerts(){
+  const token=document.getElementById('telegramToken').value.trim(), chat=document.getElementById('telegramChat').value.trim(), status=document.getElementById('telegramStatus');
+  localStorage.setItem('telegramToken',token); localStorage.setItem('telegramChat',chat);
+  if(!token||!chat){status.textContent='Configura Bot token y Chat ID antes de enviar.';return;}
+  try{const res=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chat,text:telegramMessage()})}); if(!res.ok)throw new Error(await res.text()); status.textContent='Alertas enviadas al coordinador por Telegram.';}catch(e){status.textContent='No se pudo enviar desde el navegador. Copia el mensaje o usa un backend/proxy para proteger el token.'; console.warn(e);}
+}
+function copyTelegramMessage(){navigator.clipboard?.writeText(telegramMessage());document.getElementById('telegramStatus').textContent='Mensaje copiado para enviar al coordinador.';}
+
+function generateExecutivePdf(){
+  const topD=drogStats().slice(0,8), topM=mensajerosStats().slice(0,8), alerts=buildAlerts().slice(0,10), margin=[36,48,36,42];
+  const doc={pageSize:'A4',pageMargins:margin,content:[
+    {text:'Informe Ejecutivo de Operación Logística',style:'title'},
+    {text:`Corte en tiempo real: ${new Date().toLocaleString('es-CO')} · Fuente: Google Sheets publicado`,style:'muted'},
+    {columns:[{width:'*',stack:[{text:'Resumen general',style:'h2'},{text:`La operación registra ${DATA.length} servicios, ${byEstado('Entregado')} entregados, ${byEstado('Registro')} en registro y ${byEstado('En Ruta')} en ruta. El nivel de servicio es ${(DATA.length?byEstado('Entregado')/DATA.length*100:0).toFixed(1)}%.`,style:'p'}]},{width:150,table:{body:[['Nivel servicio',(DATA.length?byEstado('Entregado')/DATA.length*100:0).toFixed(1)+'%'],['Registro',String(byEstado('Registro'))],['Sin gestión +2h',String(unattendedCouriers().length)]]},layout:'lightHorizontalLines'}]},
+    {text:'Alertas priorizadas',style:'h2'},
+    {ul:alerts.map(a=>`[${a.sev}] ${a.txt}`)},
+    {text:'Top droguerías',style:'h2'},
+    {table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:[['Droguería','Ciudad','Servicios','Registro','Mens.'],...topD.map(d=>[d.drog,d.ciudad,String(d.total),String(d.reg),String(d.asign)])]},layout:'lightHorizontalLines'},
+    {text:'Top mensajeros',style:'h2'},
+    {table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:[['Mensajero','Punto','Turno','Total','Prod.'],...topM.map(m=>[m.nombre,m.punto,m.turno,String(m.total),m.prod.toFixed(0)+'%'])]},layout:'lightHorizontalLines'},
+    {text:'Conclusión ejecutiva',style:'h2'},
+    {text:'Se recomienda priorizar puntos con registro crítico, validar mensajeros sin gestión después de dos horas de iniciado el turno y redistribuir carga en mensajeros con baja productividad o sobrecarga.',style:'p'}
+  ],styles:{title:{fontSize:19,bold:true,color:'#0B0F19',margin:[0,0,0,4]},h2:{fontSize:13,bold:true,color:'#0B0F19',margin:[0,14,0,7]},muted:{fontSize:9,color:'#64748B',margin:[0,0,0,14]},p:{fontSize:10.5,lineHeight:1.35,color:'#334155'}},defaultStyle:{fontSize:9.5,color:'#0f172a'}};
+  if(window.pdfMake)pdfMake.createPdf(doc).download(`informe-ejecutivo-operacion-${new Date().toISOString().slice(0,10)}.pdf`);
+  else window.print();
+}
+
 const PAGES={resumen:['Resumen Ejecutivo','Vista general de la operación logística en tiempo real'],
   operacion:['Operación en Vivo','Seguimiento geográfico de mensajeros y pedidos'],
   mensajeros:['Productividad de Mensajeros','Ranking y score de desempeño individual'],
