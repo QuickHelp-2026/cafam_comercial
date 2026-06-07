@@ -775,7 +775,7 @@ function renderMap(){
   markers.forEach(m=>map.removeLayer(m)); markers=[];
   DATA.filter(d=>d.cx&&d.cy).slice(0,160).forEach(d=>{
     const col=ESTADO_COLOR[d.estado]||COLORS.gray;
-    const mk=L.circleMarker([d.cx,d.cy],{radius:6,fillColor:col,color:'#fff',weight:1,fillOpacity:.9});
+    const mk=L.circleMarker([d.cy,d.cx],{radius:6,fillColor:col,color:'#fff',weight:1,fillOpacity:.9});
     mk.bindPopup(`<b>${d.servicio}</b><br>${d.farmacia_asignada}<br>Estado: <b style="color:${col}">${d.estado}</b><br>Mensajero: ${d.nombre_mensajero}`);
     mk.addTo(map); markers.push(mk);
   });
@@ -1256,13 +1256,13 @@ function renderMap(){
   rows.forEach((d,i)=>{
     const col=ESTADO_COLOR[d.estado]||COLORS.gray;
     const mk=selectedCourier
-      ? L.marker([d.cx,d.cy],{icon:L.divIcon({className:'',html:`<div class="route-marker" style="background:${col}">${i+1}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
-      : L.circleMarker([d.cx,d.cy],{radius:6,fillColor:col,color:'#fff',weight:1,fillOpacity:.92});
+      ? L.marker([d.cy,d.cx],{icon:L.divIcon({className:'',html:`<div class="route-marker" style="background:${col}">${i+1}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
+      : L.circleMarker([d.cy,d.cx],{radius:6,fillColor:col,color:'#fff',weight:1,fillOpacity:.92});
     mk.bindPopup(`<b>${safeText(d.servicio)}</b><br>${safeText(d.farmacia_asignada)}<br>Estado: <b style="color:${col}">${safeText(d.estado)}</b><br>Mensajero: ${safeText(d.nombre_mensajero)}<br>Orden: ${i+1}`);
     mk.addTo(map);markers.push(mk);
   });
-  if(routeEnabled&&document.getElementById('opMensajero')?.value&&rows.length>1){routeLine=L.polyline(rows.map(d=>[d.cx,d.cy]),{color:COLORS.blue,weight:4,opacity:.82,dashArray:'8 8'}).addTo(map);}
-  if(rows.length)map.fitBounds(rows.map(d=>[d.cx,d.cy]),{padding:[30,30],maxZoom:13});
+  if(routeEnabled&&document.getElementById('opMensajero')?.value&&rows.length>1){routeLine=L.polyline(rows.map(d=>[d.cy,d.cx]),{color:COLORS.blue,weight:4,opacity:.82,dashArray:'8 8'}).addTo(map);}
+  if(rows.length)map.fitBounds(rows.map(d=>[d.cy,d.cx]),{padding:[30,30],maxZoom:13});
   renderRouteList(rows);
   setTimeout(()=>map.invalidateSize(),200);
 }
@@ -1272,7 +1272,7 @@ function focusCurrentRoute(){
   if(btn)btn.classList.add('btn-primary');
   renderMap();
   const rows=orderedRouteRows();
-  if(map&&rows.length)map.fitBounds(rows.map(d=>[d.cx,d.cy]),{padding:[45,45],maxZoom:16});
+  if(map&&rows.length)map.fitBounds(rows.map(d=>[d.cy,d.cx]),{padding:[45,45],maxZoom:16});
 }
 function renderRouteList(rows=orderedRouteRows()){
   const box=document.getElementById('routeList'); if(!box)return;
